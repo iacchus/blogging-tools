@@ -7,7 +7,6 @@ import subprocess
 
 p = subprocess.Popen('date', stdout=subprocess.PIPE)
 DATE = p.stdout.read().decode('utf-8').strip()
-print(DATE)
 
 POST_MODEL = """\
 title: {title}
@@ -65,6 +64,12 @@ for arg in sys.argv[1:]:
         components.update({ key: list() })
 
     else:
+
+        # this way we can omit -s
+        if not key:
+            key = '-s'
+            components.update({ key: list() })
+
         try:
             components[key].append(arg)
         except KeyError:
@@ -106,7 +111,7 @@ if not os.path.exists(filename):
 
 subprocess.call([EDITOR, filename], shell=True)
 
-do_post = input('push changes?')
+do_post = input('push changes? (N/y) ')
 if do_post in ('y', 'Y'):
     os.chdir(PELICAN_ROOT)
     subprocess.call(['./build.sh'])

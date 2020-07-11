@@ -3,7 +3,6 @@
 import sys
 import os
 import re
-#import subprocess
 from subprocess import Popen, call, PIPE, STDOUT
 import glob
 
@@ -44,7 +43,7 @@ filepath = f"{PELICAN_CONTENT}/{filename}"
 print(filename, filepath)
 call([EDITOR, filepath])
 
-do_post = input('Commit and push changes?')
+do_post = input('Commit and push changes? (N/y) ')
 if do_post in ('y', 'Y'):
     os.chdir(PELICAN_ROOT)
-    subprocess.call(['./build.sh'])
+    call(['./build.sh'])
