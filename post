@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+
+import sys
+import os
+import re
+import subprocess
+
+p = subprocess.Popen('date', stdout=subprocess.PIPE)
+DATE = p.stdout.read().decode('utf-8').strip()
+print(DATE)
+
+POST_MODEL = """\
+title: {title}
+date: {date}
+modified: {date}
+tags: {tags}
+summary: {summary}
+status: published
+
+"""
+
+PELICAN_ROOT = os.path.expanduser(os.getenv('PELICAN_ROOT'))
+PELICAN_CONTENT = os.path.expanduser(os.getenv('PELICAN_CONTENT'))
+
+EDITOR = os.getenv('EDITOR')
+
+FILE_EXTENSION = ".md"
+
+print(PELICAN_ROOT)
+print(PELICAN_CONTENT)
+
+if not PELICAN_ROOT:
+    print("You should set PELICAN_ROOT env variable.")
+    exit(1)
+
+# -s: subject
+# -t: tags
+# -e: excerpt
+OPTIONS = ['-s', '-t', '-e']
+
+URI_DICT = {
+        'á|à|â|ã': 'a',
+        'é|è|ê|ẽ': 'e',
+        'í|ì|î|ĩ': 'i',
+        'ó|ò|ô|õ': 'o',
+        'ú|ù|û|ũ': 'u',
+        'ç': 'c',
+        '&': 'e',
+        '\s': '-',
+        ',': '-',
+        '~': '-',
+        '\/|\\/': '-',
+        '@': 'at',
+        '\'|"|\.|!|\^|\$|\?|\[|\]|{|}': '',
+        #'\W': '',
+        }
+
+key = str()
+components = dict()
+
+for arg in sys.argv[1:]:
+
+    if arg in OPTIONS:
+        key = arg
+        components.update({ key: list() })
+
+    else:
+        try:
+            components[key].append(arg)
+        except KeyError:
+            print(f"You should type an option first. Valids are: {OPTIONS}.")
+            exit(2)
+
+if '-s' in components.keys():
+    title = " ".join(components['-s'])
+else:
+    title = ""
+
+uri = str()
+uri = title.lower()
+
+for regex, replace in URI_DICT.items():
+    uri = re.sub(regex, replace, uri)
+
+if '-t' in components.keys():
+    tags = " ".join(components['-t'])
+else:
+    tags = ""
+
+
+if '-e' in components.keys():
+    summary = " ".join(components['-e'])
+else:
+    summary = ""
+
+pre_post = POST_MODEL.format(title=title, date=DATE, tags=tags,
+                             summary=summary)
+
+filename = f"{PELICAN_CONTENT}/{uri}{FILE_EXTENSION}"
+#print(filename)
+#print(pre_post)
+
+if not os.path.exists(filename):
+    with open(filename, "w") as post_file:
+        post_file.write(pre_post)
+
+subprocess.call([EDITOR, filename], shell=True)
+
+do_post = input('push changes?')
+if do_post in ('y', 'Y'):
+    os.chdir(PELICAN_ROOT)
+    subprocess.call(['./build.sh'])
+
+#print(title)
+#print(uri)
+#print(tags)
