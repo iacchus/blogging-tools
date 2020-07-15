@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import os
-from subprocess import call
+from subprocess import call, Popen
 
 PELICAN_ROOT = os.path.expanduser(os.getenv('PELICAN_ROOT'))
 
 os.chdir(PELICAN_ROOT)
-call(['./build.sh'])
+#call(['./build.sh'])
+Popen(['./build.sh'], shell=True).wait()

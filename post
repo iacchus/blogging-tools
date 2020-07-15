@@ -16,6 +16,7 @@ tags: {tags}
 summary: {summary}
 status: published
 
+
 """
 
 PELICAN_ROOT = os.path.expanduser(os.getenv('PELICAN_ROOT'))
@@ -63,17 +64,18 @@ for arg in sys.argv[1:]:
         key = arg
         components.update({ key: list() })
 
+    # this way we can omit -s
+    elif not key:
+        key = '-s'
+        components.update({ key: list() })
+        components[key].append(arg)
+
     else:
-
-        # this way we can omit -s
-        if not key:
-            key = '-s'
-            components.update({ key: list() })
-
         try:
             components[key].append(arg)
         except KeyError:
-            print(f"You should type an option first. Valids are: {OPTIONS}.")
+            print(f"You should type an option first. "
+                   "Valids are: {OPTIONS}.")
             exit(2)
 
 if '-s' in components.keys():
@@ -102,6 +104,7 @@ pre_post = POST_MODEL.format(title=title, date=DATE, tags=tags,
                              summary=summary)
 
 filename = f"{PELICAN_CONTENT}/{uri}{FILE_EXTENSION}"
+print(filename)
 #print(filename)
 #print(pre_post)
 
@@ -109,13 +112,12 @@ if not os.path.exists(filename):
     with open(filename, "w") as post_file:
         post_file.write(pre_post)
 
-subprocess.call([EDITOR, filename], shell=True)
+#subprocess.call([EDITOR, filename], shell=True)
+ed_options = '+norm G'
+subprocess.call([EDITOR, ed_options, filename])
 
-do_post = input('push changes? (N/y) ')
+do_post = input('commit and push changes? (N/y) ')
 if do_post in ('y', 'Y'):
     os.chdir(PELICAN_ROOT)
     subprocess.call(['./build.sh'])
 
-#print(title)
-#print(uri)
-#print(tags)

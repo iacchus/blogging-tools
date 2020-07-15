@@ -43,7 +43,25 @@ filepath = f"{PELICAN_CONTENT}/{filename}"
 print(filename, filepath)
 call([EDITOR, filepath])
 
-do_post = input('Commit and push changes? (N/y) ')
+do_post = input('Commit and push changes, thus modifying'
+                'the `modified\' date? (N/y) ')
+
 if do_post in ('y', 'Y'):
+
+    modified_line = int()
+
+    with open(filepath, 'r') as post:
+        post_data = post.readlines()
+
+    for idx, line in enumerate(post_data):
+        if line.startswith('modified:'):
+            post_data[idx] = f'modified: {DATE}\n'
+            break
+
+    post_date_modified = "".join(post_data)
+
+    with open(filepath, 'w') as post:
+        post.write(post_date_modified)
+
     os.chdir(PELICAN_ROOT)
     call(['./build.sh'])
