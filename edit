@@ -44,7 +44,7 @@ print(filename, filepath)
 call([EDITOR, filepath])
 
 do_post = input('Commit and push changes, thus modifying'
-                'the `modified\' date? (N/y) ')
+                ' the `modified\' date? (N/y) ')
 
 if do_post in ('y', 'Y'):
 
