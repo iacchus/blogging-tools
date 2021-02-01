@@ -4,6 +4,9 @@ import sys
 import os
 import re
 import subprocess
+import time
+
+TIMESTAMP = time.time()
 
 p = subprocess.Popen('date', stdout=subprocess.PIPE)
 DATE = p.stdout.read().decode('utf-8').strip()
@@ -80,11 +83,12 @@ for arg in sys.argv[1:]:
 
 if '-s' in components.keys():
     title = " ".join(components['-s'])
+
+    uri = str()
+    uri = title.lower()
 else:
     title = ""
-
-uri = str()
-uri = title.lower()
+    uri = str(TIMESTAMP)
 
 for regex, replace in URI_DICT.items():
     uri = re.sub(regex, replace, uri)
@@ -105,15 +109,13 @@ pre_post = POST_MODEL.format(title=title, date=DATE, tags=tags,
 
 filename = f"{PELICAN_CONTENT}/{uri}{FILE_EXTENSION}"
 print(filename)
-#print(filename)
-#print(pre_post)
 
 if not os.path.exists(filename):
     with open(filename, "w") as post_file:
         post_file.write(pre_post)
 
 #subprocess.call([EDITOR, filename], shell=True)
-ed_options = '+norm G'
+ed_options = '+norm G'  # in NORMAL mode set the cursor to the end of the file
 subprocess.call([EDITOR, ed_options, filename])
 
 do_post = input('commit and push changes? (N/y) ')
