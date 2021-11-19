@@ -39,22 +39,30 @@ new_lst = "\n".join([path.split('/')[-1] for path in pre_lst
 fzf = Popen('fzf', shell=True, stdin=PIPE, stdout=PIPE)
 output, err = fzf.communicate(input=new_lst)
 
-filename = output.decode('utf-8').strip()
+src_filename = output.decode('utf-8').strip()
 
-(lang, translate_filename) = filename.split('-', 1)
+(lang, filename_uri) = src_filename.split('-', 1)
 
 if lang in LANGUAGES:
     if lang == 'en':
         lang = 'pt'
     else:
-        lang = 'pt'
+        lang = 'en'
 
-    translate_filename = "{lang}-{translate_filename}"
+    translate_filename = f"{lang}-{filename_uri}"
 
-filepath = f"{PELICAN_CONTENT}/{filename}"
+else:
+    the_non_default_lang = "pt"
+    translate_filename = f"{the_non_default_lang}-{filename_uri}"
 
-print(filename, filepath)
-call([EDITOR, filepath])
+src_path = f"{PELICAN_CONTENT}/{src_filename}"
+translation_path = f"{PELICAN_CONTENT}/{translate_filename}"
+
+call(["cp", "-n", src_path, translation_path])
+
+print(*["copying", src_path, "to", translation_path])
+
+call([EDITOR, translation_path])
 
 do_post = input('Commit and push changes, thus modifying'
                 ' the `modified\' date? (N/y) ')
@@ -63,7 +71,7 @@ if do_post in ('y', 'Y'):
 
     modified_line = int()
 
-    with open(filepath, 'r') as post:
+    with open(translation_path, 'r') as post:
         post_data = post.readlines()
 
     # let's rewrite the metadata
@@ -71,13 +79,13 @@ if do_post in ('y', 'Y'):
         if line.startswith('lang:') and lang in LANGUAGES:
             post_data[idx] = f'lang: {lang}\n'
             #break
-        if line.startswith('modified:') and not bit_modified:
+        if line.startswith('modified:'):
             post_data[idx] = f'modified: {DATE}\n'
             #break
 
     post_date_modified = "".join(post_data)
 
-    with open(filepath, 'w') as post:
+    with open(translation_path, 'w') as post:
         post.write(post_date_modified)
 
     os.chdir(PELICAN_ROOT)

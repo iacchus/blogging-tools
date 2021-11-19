@@ -52,7 +52,7 @@ URI_DICT = {
         'ó|ò|ô|õ': 'o',
         'ú|ù|û|ũ': 'u',
         'ç': 'c',
-        '&': 'e',
+        '&': 'et',
         '\s': '-',
         ',': '-',
         '~': '-',
@@ -117,7 +117,7 @@ else:
 pre_post = POST_MODEL.format(title=title, slug=uri, lang=lang,
                              date=DATE, tags=tags, summary=summary)
 
-lang_uri = "{lang}-" + uri
+lang_uri = f"{lang}-" + uri
 
 filename = f"{PELICAN_CONTENT}/{lang_uri}{FILE_EXTENSION}"
 print(filename)
