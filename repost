@@ -1,10 +1,22 @@
 #!/usr/bin/env python
 
 import os
-from subprocess import call, Popen
+from plumbum import local
 
-PELICAN_ROOT = os.path.expanduser(os.getenv('PELICAN_ROOT'))
+PELICAN_CONTENT = os.path.expanduser(os.getenv('PELICAN_CONTENT'))
+local.cwd.chdir(PELICAN_CONTENT)
 
-os.chdir(PELICAN_ROOT)
-#call(['./build.sh'])
-Popen(['./build.sh'], shell=True).wait()
+GIT = local['git']
+
+def git_repost():
+    adding = GIT['add', '.']()
+    print(adding)
+
+    commiting = GIT['commit', '-a', '-m', 'autocommit']()
+    print(commiting)
+
+    pushing = GIT['push']()
+    print(pushing)
+
+if __name__ == "__main__":
+    git_repost()

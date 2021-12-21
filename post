@@ -5,11 +5,34 @@ import os
 import re
 import subprocess
 import time
+from plumbum import local
+
+PELICAN_CONTENT = os.path.expanduser(os.getenv('PELICAN_CONTENT'))
+
+if not PELICAN_CONTENT:
+    print("You should set PELICAN_CONTENT env variable.")
+    exit(2)
+
+local.cwd.chdir(PELICAN_CONTENT)
+
+def git_repost():
+
+    GIT = local['git']
+
+    adding = GIT['add', '.']()
+    print(adding)
+
+    commiting = GIT['commit', '-a', '-m', 'autocommit']()
+    print(commiting)
+
+    pushing = GIT['push']()
+    print(pushing)
+
 
 TIMESTAMP = time.time()
 
-p = subprocess.Popen('date', stdout=subprocess.PIPE)
-DATE = p.stdout.read().decode('utf-8').strip()
+date = local['date']
+DATE = date().strip()
 
 LANG = "en"
 
@@ -26,19 +49,14 @@ status: published
 
 """
 
-PELICAN_ROOT = os.path.expanduser(os.getenv('PELICAN_ROOT'))
-PELICAN_CONTENT = os.path.expanduser(os.getenv('PELICAN_CONTENT'))
+# PELICAN_ROOT = os.path.expanduser(os.getenv('PELICAN_ROOT'))
+#PELICAN_CONTENT = os.path.expanduser(os.getenv('PELICAN_CONTENT'))
 
 EDITOR = os.getenv('EDITOR')
 
 FILE_EXTENSION = ".md"
 
-print(PELICAN_ROOT)
 print(PELICAN_CONTENT)
-
-if not PELICAN_ROOT:
-    print("You should set PELICAN_ROOT env variable.")
-    exit(1)
 
 # -s: subject
 # -t: tags
@@ -131,7 +149,7 @@ ed_options = '+norm G'  # in NORMAL mode set the cursor to the end of the file
 subprocess.call([EDITOR, ed_options, filename])
 
 do_post = input('commit and push changes? (N/y) ')
+
 if do_post in ('y', 'Y'):
-    os.chdir(PELICAN_ROOT)
-    subprocess.call(['./build.sh'])
+    git_repost()
 

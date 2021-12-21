@@ -1,43 +1,53 @@
 #!/usr/bin/env python
 
-import sys
 import os
-import re
 from subprocess import Popen, call, PIPE, STDOUT
-import glob
+from glob import glob
 
-p = Popen('date', stdout=PIPE, stdin=PIPE,
-                     stderr=STDOUT)
-DATE = p.stdout.read().decode('utf-8').strip()
+from plumbum import local
 
-PELICAN_ROOT = os.path.expanduser(os.getenv('PELICAN_ROOT'))
 PELICAN_CONTENT = os.path.expanduser(os.getenv('PELICAN_CONTENT'))
-
-EDITOR = os.getenv('EDITOR')
-
-FILE_EXTENSION = ".md"
-
-if not PELICAN_ROOT:
-    print("You should set PELICAN_ROOT env variable.")
-    exit(1)
 
 if not PELICAN_CONTENT:
     print("You should set PELICAN_CONTENT env variable.")
     exit(2)
 
-ls = Popen(f'ls {PELICAN_CONTENT}/*.md', shell=True, stdout=PIPE, stdin=PIPE,
-           stderr=PIPE)
-lst = ls.communicate()[0]
-ls.stdout.close()
+local.cwd.chdir(PELICAN_CONTENT)
 
-pre_lst = lst.decode('utf-8').strip().split('\n')
-new_lst = "\n".join([path.split('/')[-1] for path in pre_lst
-                     if path.endswith(FILE_EXTENSION)]).encode('utf-8')
+def git_repost():
+
+    GIT = local['git']
+
+    adding = GIT['add', '.']()
+    print(adding)
+
+    commiting = GIT['commit', '-a', '-m', 'autocommit']()
+    print(commiting)
+
+    pushing = GIT['push']()
+    print(pushing)
+
+DATE = local['date']
+LS = local['ls']
+SH = local['sh']
+
+DATE_STRING = DATE().strip()
+
+EDITOR = os.getenv('EDITOR')
+
+FILE_EXTENSION = ".md"
+
+md_files_list = LS[glob('*.md')]().strip().split('\n')
+md_files_str = "\n".join(md_files_list)
 
 fzf = Popen('fzf', shell=True, stdin=PIPE, stdout=PIPE)
-output, err = fzf.communicate(input=new_lst)
+output, err = fzf.communicate(input=md_files_str.encode('utf-8'))
+
 
 filename = output.decode('utf-8').strip()
+if filename == "":
+    print("No file chosen; exiting...")
+    exit(0)
 filepath = f"{PELICAN_CONTENT}/{filename}"
 
 print(filename, filepath)
@@ -55,7 +65,7 @@ if do_post in ('y', 'Y'):
 
     for idx, line in enumerate(post_data):
         if line.startswith('modified:'):
-            post_data[idx] = f'modified: {DATE}\n'
+            post_data[idx] = f'modified: {DATE_STRING}\n'
             break
 
     post_date_modified = "".join(post_data)
@@ -63,5 +73,4 @@ if do_post in ('y', 'Y'):
     with open(filepath, 'w') as post:
         post.write(post_date_modified)
 
-    os.chdir(PELICAN_ROOT)
-    call(['./build.sh'])
+    git_repost()
